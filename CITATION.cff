@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use claude-mac-patrol in research or software, please cite it as below."
+title: "claude-mac-patrol"
+type: software
+authors:
+  - family-names: Dziatkovskii
+    given-names: Anton
+    orcid: "https://orcid.org/0000-0001-7408-3054"
+    affiliation: "Palo Alto AI Research Lab"
+repository-code: "https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol"
+url: "https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol"
+license: MIT
+abstract: >-
+  A dependency-free janitor for machines running agent CLIs such as Claude Code, plus the
+  field procedure it came from. Closes orphaned MCP children and stale agent sessions,
+  restarts stuck daemons it owns, and reports what it must not touch. Every verdict comes
+  from a delta of two CPU-time snapshots, never from the lifetime average that ps %CPU
+  reports. Standard library only, no telemetry, no network. Free, MIT.
+keywords:
+  - macos
+  - process-management
+  - agent-operations
+  - claude-code
+  - observability
