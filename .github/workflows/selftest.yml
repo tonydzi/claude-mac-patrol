@@ -1,0 +1,26 @@
+name: selftest
+
+# The tool's own rule: a check nobody runs is not a check.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "41 5 * * 1"   # weekly, so rot surfaces without a push
+
+jobs:
+  selftest:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: decision-logic tests (fake snapshots, kills nothing)
+        run: python3 test_mac_patrol.py
+      - name: dry-run must never change anything
+        run: python3 mac_patrol.py --dry-run || test $? -eq 1

@@ -109,7 +109,7 @@ Claude Code can run the whole cleanup for you, or read it yourself as a checklis
 ## Tests
 
 ```bash
-python3 test_mac_patrol.py     # 54 checks, fake process snapshots, kills nothing
+python3 test_mac_patrol.py     # 58 checks, fake process snapshots, kills nothing
 ```
 
 The tests drive the real file (including a real injected crash, to prove the crash-guard
@@ -120,6 +120,27 @@ exits 4 and never masquerades as "found and handled").
 macOS is the target. Linux works (cron + `/proc`). Windows parses and schedules, but has no
 CPU-delta measurement, so it falls back to the hard 24h session ceiling only — deliberately
 returning *nothing* rather than a fake zero.
+
+## Roadmap
+
+**Now — [v0.1.0](https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol/releases/tag/v0.1.0).**
+One file, standard library only: CPU-delta measurement instead of `ps %CPU`, class-weighted
+memory accounting, orphan-MCP and stale-session detection, `--dry-run`, and a 30-minute
+schedule installer (launchd on macOS, cron on Linux). 58 offline tests, now on CI.
+
+**Next**, in the order we would take them:
+
+- **Thresholds that came from more than one laptop.** Every number in this repo was tuned on a
+  single machine over one bad week. A disagreement with our thresholds, sent as `--dry-run`
+  output, is the most useful bug report we can get.
+- **Windows CPU-delta.** Windows parses and schedules today but has no delta measurement, so it
+  falls back to the 24h session ceiling — it returns *nothing* rather than a fake zero.
+- **More process classes.** The allowlist and the MCP class list are ours; yours will differ.
+
+Every noticeable change ships as a new release, so the
+[release feed](https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol/releases) is the
+record of what this janitor has learned to recognise — which matters, because a janitor that
+kills the wrong process is worse than none.
 
 ---
 
