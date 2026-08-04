@@ -83,6 +83,12 @@ Slack, whatever you like).
 
 ### Safety rails you should know about
 
+- **The first run on a machine is a PREVIEW, always.** It prints what it would do, writes its
+  state file, and kills nothing. Read the list, allowlist your own daemons, then run again.
+  (`--force-first` overrides this if you know exactly what you are doing.)
+- **No kill without a measurement.** If the CPU-delta sampler returns nothing — it failed, or
+  your platform has none — hogs are *reported* as `unmeasured`, never killed. Falling back to
+  `ps %CPU` for a kill decision would break the one promise this tool makes.
 - **It never types a password.** Anything needing `sudo` is reported, not executed.
 - **`mac_patrol_allow.txt`** (same directory) protects anything you list — by launchd label,
   systemd unit, or cmdline substring. You will need this: your own long-lived daemons have

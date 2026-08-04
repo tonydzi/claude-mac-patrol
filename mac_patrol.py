@@ -408,9 +408,19 @@ def patrol(procs, protect, cpu_now=None, allow=None):
         else:
             # measured burn, NOT ps %CPU (which is a lifetime average -- see cpu_delta_map)
             burn = cpu_now.get(p["pid"])
-            if burn is None or not cpu_now:
+            measured = burn is not None and bool(cpu_now)
+            if not measured:
                 burn = p["cpu"]
             if burn < CPU_HOG_PCT or p["age"] <= 600:
+                continue
+            # ⛔ NO KILL WITHOUT A MEASUREMENT. If the delta sampler returned nothing (it
+            # failed, or this platform has none), `burn` above is the LIFETIME AVERAGE, which
+            # is exactly the number that once made us call a sleeping process a 5-day hog.
+            # Falling back to it for a REPORT is fine; killing on it would break the one
+            # promise this tool makes. Report-only, and say why.
+            if not measured:
+                mark = " (unmeasured: ps %CPU only -- report only)"
+                hogs.append((burn, "%s pid=%d %.0f%%cpu%s" % (p["name"], p["pid"], burn, mark)))
                 continue
             hot_for_hours = p["age"] > STUCK_AGE_H * 3600
             restartable = any(tag in p["name"] or tag in p["cmd"] for tag in RESTARTABLE_HOG)
@@ -473,6 +483,12 @@ def do_kill(kill_list, dry):
                                    capture_output=True, timeout=15)
                 done += 1 if r.returncode == 0 else 0
             else:
+                # PID REUSE GUARD: a PID can be freed and handed to an unrelated process
+                # between the snapshot and this line. Re-check the binary right before
+                # signalling -- the SIGKILL below has always done this; SIGTERM must too.
+                if not _same_process(pid, name):
+                    print("skip %d: PID now belongs to a different process" % pid)
+                    continue
                 os.kill(pid, signal.SIGTERM)
                 done += 1
         except Exception:
@@ -561,12 +577,24 @@ def main(argv):
     if "--install" in argv:
         code = install()
         if code == 0:
-            code = main([a for a in argv if a != "--install"] + ["--no-bus"]) or 0
+            # The post-install run is a PREVIEW, never a live sweep. A stranger's machine
+            # has long-lived daemons of its own that look exactly like orphans (PPID=1),
+            # and they must get a chance to read the list and write an allowlist first.
+            code = main([a for a in argv if a != "--install"] + ["--no-bus", "--dry-run"]) or 0
             return 0 if code in (0, 1) else code
         return code
     if "--verify" in argv:
         return verify()
     dry = "--dry-run" in argv
+    # FIRST RUN IS ALWAYS A PREVIEW. No state file = we have never looked at this machine,
+    # so we do not get to kill anything on it yet. The user reads the list, allowlists their
+    # own daemons (mac_patrol_allow.txt), and the next run acts for real. Override with
+    # --force-first if you know exactly what you are doing.
+    first_run = not os.path.exists(STATE) and "--force-first" not in argv
+    if first_run and not dry:
+        print("first run on this machine -> PREVIEW ONLY. Review the list below, put any of "
+              "your own long-lived daemons into %s, then run again." % ALLOW_FILE)
+        dry = True
     no_bus = "--no-bus" in argv or dry
     procs = snapshot_windows() if IS_WIN else snapshot_posix()
     if not procs:
@@ -607,7 +635,8 @@ def main(argv):
             bits.append("CPU hogs: " + "; ".join(f["hogs"]))
         if swap is not None and swap >= SWAP_WARN_PCT:
             bits.append("swap %d%% -- if it feels slow, restart the agent app" % swap)
-        msg = "PATROL %s: %s" % (HOST, " | ".join(bits))
+        # a preview must never report kills in the past tense (honest numbers rule)
+        msg = "PATROL%s %s: %s" % (" [preview]" if dry else "", HOST, " | ".join(bits))
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     state = dict(ts=now, host=HOST, dirty=dirty, killed=killed, swap_pct=swap,

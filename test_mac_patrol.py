@@ -104,6 +104,27 @@ def run():
     check("allow: an idle session matching the allowlist survives", not gk)
     check("allow: missing file -> empty allowlist", pp.load_allow("/no/such") == ([], set()))
 
+    # NO KILL WITHOUT A MEASUREMENT (external review, 2026-08-04): when the delta sampler
+    # returns nothing, `ps %CPU` must never be promoted into a kill decision -- that number
+    # is a lifetime average and once made us call a sleeping process a 5-day hog.
+    unmeasured = pp.snapshot_posix(
+        "  744   468 R  99.0  800000 04-16:35:46 " + ME + " Claude Helper (R /Applications/Claude.app/"
+        "Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer)\n"
+        "  905     1 R  99.0   50000    03:00:00 " + ME + " AppleSpell"
+        " /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell\n")
+    ku, fu = pp.patrol(unmeasured, protect=set(), cpu_now={})
+    kpu = {pid for pid, _, _ in ku}
+    check("no delta -> stuck renderer NOT killed on ps %CPU", 744 not in kpu)
+    check("no delta -> system daemon NOT killed on ps %CPU", 905 not in kpu)
+    check("no delta -> reported as unmeasured", any("unmeasured" in h for h in fu["hogs"]))
+
+    # PID reuse: do_kill must re-check the binary before SIGTERM, not only before SIGKILL
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mac_patrol.py"),
+               encoding="utf-8").read()
+    term_at = src.index("os.kill(pid, signal.SIGTERM)")
+    check("SIGTERM is guarded by _same_process",
+          "_same_process" in src[term_at - 400:term_at])
+
     kill2, _ = pp.patrol(procs, protect={100, 200})
     kp2 = {pid for pid, _, _ in kill2}
     check("self-chain protected", 100 not in kp2 and 200 not in kp2)
