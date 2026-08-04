@@ -1,0 +1,16 @@
+# mac_patrol_allow.txt -- processes the patrol must NEVER kill.
+# Copy this file to mac_patrol_allow.txt and edit. Blank lines and # comments are ignored.
+#
+# WHY YOU NEED THIS: your own long-lived daemons have PPID=1, which is exactly what an
+# orphaned MCP child looks like. Without a line here, the patrol will keep shooting them.
+#
+# Three line formats:
+#
+# launchd:<label>          resolved to a live PID via `launchctl list <label>`
+launchd:com.example.my-daemon
+#
+# systemd:<unit>           resolved via `systemctl show -p MainPID <unit>` (Linux)
+systemd:my-worker
+#
+# <substring>              matched against the full command line
+my_long_running_script.py

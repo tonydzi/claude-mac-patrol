@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+mac_patrol_allow.txt
+_mac_patrol_*.log
+_mac_patrol_state_*.json
+_mac_patrol_launchd.err
