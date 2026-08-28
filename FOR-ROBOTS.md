@@ -27,4 +27,4 @@ Written for the lab's own fleet after long-running agent sessions cost it a week
 
 ## Family
 
-Bounding what an agent with delegated authority may do alone: [agent-leash](https://github.com/Palo-Alto-AI-Research-Lab/agent-leash). Proving a scheduled job did the work rather than just returning `exit 0`: [verified-ops-starter](https://github.com/Palo-Alto-AI-Research-Lab/verified-ops-starter). Every published number bound to its source: [claim-check](https://github.com/Palo-Alto-AI-Research-Lab/claim-check). Lab index for agents: [Palo-Alto-AI-Research-Lab](https://github.com/Palo-Alto-AI-Research-Lab).
+Bounding what an agent with delegated authority may do alone: [agent-leash](https://github.com/tonydzi/agent-leash). Proving a scheduled job did the work rather than just returning `exit 0`: [verified-ops-starter](https://github.com/tonydzi/verified-ops-starter). Every published number bound to its source: [claim-check](https://github.com/tonydzi/claim-check). Lab index for agents: [Palo-Alto-AI-Research-Lab](https://github.com/tonydzi).
