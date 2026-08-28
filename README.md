@@ -9,7 +9,7 @@ the field notes for diagnosing it by hand.
 One file. Python standard library only. No dependencies, no telemetry, no network.
 
 ```bash
-git clone https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol
+git clone https://github.com/tonydzi/claude-mac-patrol
 cd claude-mac-patrol
 python3 mac_patrol.py --dry-run     # shows every decision, changes nothing
 python3 mac_patrol.py --install     # 30-min schedule (launchd on macOS, cron on Linux)
@@ -123,7 +123,7 @@ returning *nothing* rather than a fake zero.
 
 ## Roadmap
 
-**Now — [v0.1.0](https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol/releases/tag/v0.1.0).**
+**Now — [v0.1.0](https://github.com/tonydzi/claude-mac-patrol/releases/tag/v0.1.0).**
 One file, standard library only: CPU-delta measurement instead of `ps %CPU`, class-weighted
 memory accounting, orphan-MCP and stale-session detection, `--dry-run`, and a 30-minute
 schedule installer (launchd on macOS, cron on Linux). 58 offline tests, now on CI.
@@ -138,13 +138,13 @@ schedule installer (launchd on macOS, cron on Linux). 58 offline tests, now on C
 - **More process classes.** The allowlist and the MCP class list are ours; yours will differ.
 
 Every noticeable change ships as a new release, so the
-[release feed](https://github.com/Palo-Alto-AI-Research-Lab/claude-mac-patrol/releases) is the
+[release feed](https://github.com/tonydzi/claude-mac-patrol/releases) is the
 record of what this janitor has learned to recognise — which matters, because a janitor that
 kills the wrong process is worse than none.
 
 ---
 
-Built by [Palo Alto AI Research Lab](https://github.com/Palo-Alto-AI-Research-Lab) — one
+Built by [Palo Alto AI Research Lab](https://github.com/tonydzi) — one
 founder, an AI cofounder, and a fleet of machines that kept slowing down until we wrote this.
 Everything we ship is free.
 
@@ -180,4 +180,4 @@ Its closest neighbours in the **fleet** layer: [`claw-consensus`](https://github
 This project is built by a human + AI team, and the git log says so: Claude writes most of
 the code, Codex and Grok review it, Gemini feeds the research. Each is credited on a commit
 **only if its output changed that commit's content** — no decorative credits. Lab-wide
-policy, one source for every repo: [AI-CONTRIBUTORS.md](https://github.com/Palo-Alto-AI-Research-Lab/.github/blob/main/AI-CONTRIBUTORS.md).
+policy, one source for every repo: [AI-CONTRIBUTORS.md](https://github.com/tonydzi/.github/blob/main/AI-CONTRIBUTORS.md).
