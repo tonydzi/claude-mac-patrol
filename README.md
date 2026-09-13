@@ -3,8 +3,7 @@
 **Your Mac is not old. It is holding thirty half-dead agent sessions.**
 
 If you leave Claude Code (or any agent CLI) running for days, your machine slowly turns to
-treacle. This repo is the janitor we wrote for our own fleet after that cost us a week, plus
-the field notes for diagnosing it by hand.
+treacle. This repo is the janitor we wrote for our own fleet after that cost us a week — [mac_patrol.py](mac_patrol.py) — plus the field notes for diagnosing it by hand.
 
 One file. Python standard library only. No dependencies, no telemetry, no network.
 
@@ -24,25 +23,22 @@ python3 mac_patrol.py --install     # 30-min schedule (launchd on macOS, cron on
 | open agent sessions | 32 | 6 |
 | RAM held by one MCP server class | 4.9 GB | 0.81 GB |
 
-Nothing was reinstalled and nothing was rebooted. The machine was simply carrying work
-nobody was waiting for any more.
+Nothing was reinstalled and nothing was rebooted. The machine was simply carrying work nobody was waiting for any more, which is all [mac_patrol.py](mac_patrol.py) removes.
 
 ## The three things that cost us the most
 
 **1. `ps %CPU` is an average over the process's whole LIFETIME.** It is not "CPU right now",
-and on a long-lived daemon it is off by any amount you like. We once announced that the
-system antivirus had been stuck for five days, off a reading of `%CPU = 91.4`. The honest
+and on a long-lived daemon it is off by any amount you like. In 2026 we once announced that the system antivirus had been stuck for five days, off a reading of `%CPU = 91.4`. The honest
 probe took five seconds:
 
 ```bash
 t1=$(ps -o time= -p <PID>); sleep 5; t2=$(ps -o time= -p <PID>); echo "$t1 -> $t2"
 ```
 
-`10:10.83 -> 10:10.83` — the process was asleep. The diagnosis was 100% wrong. Every verdict
-in this tool is based on the delta of two CPU-time snapshots, never on `ps %CPU`.
+`10:10.83 -> 10:10.83` — the process was asleep. The diagnosis was 100% wrong. Every verdict in [mac_patrol.py](mac_patrol.py) is based on the delta of two CPU-time snapshots, never on `ps %CPU`.
 
 **2. Memory is eaten by COPIES, not by fat singletons.** A watchdog that alarms on "any MCP
-server over 700 MB" never fires while thirty copies of a 163 MB server quietly eat 4.9 GB.
+server over 700 MB" never fires while thirty copies of a 163 MB server quietly eat 4.9 GB, so [mac_patrol.py](mac_patrol.py) weighs the class instead.
 Weigh the class, not the process:
 
 ```bash
@@ -53,17 +49,12 @@ for M in computer-use telegram-mcp claude-in-chrome; do
 done
 ```
 
-The real fix for a class you use constantly is one shared daemon per machine instead of one
-child per session. We did that for one MCP server and went from 48 copies / 11.7 GB to
-4 copies / 97 MB. Until such a diet exists, closing idle sessions is the only lever — which
-is what this robot does for you.
+The real fix for a class you use constantly is one shared daemon per machine instead of one child per session, as [SKILL.md](SKILL.md) explains to an agent reading this. We did that for one MCP server in 2026 and went from 48 copies / 11.7 GB to 4 copies / 97 MB. Until such a diet exists, closing idle sessions is the only lever — which is what [mac_patrol.py](mac_patrol.py) does for you.
 
 **3. A zombie cannot be killed. Kill its PARENT — and check the parent is not PID 1.**
-A zombie is already dead; it lingers because its parent never collected the exit code.
-`kill <zombie>` is a guaranteed no-op. And if the zombie's PPID is 1 it has already been
+A zombie is already dead; it lingers because its parent never collected the exit code, so [mac_patrol.py](mac_patrol.py) reports the parent instead. `kill <zombie>` is a guaranteed no-op. And if the zombie's PPID is 1 it has already been
 adopted by `launchd`, which will reap it — there is nothing to do at all. Also: a *stable*
-pair of zombies is usually not a leak but a permanent quirk of some app. Measure whether the
-count GROWS before you touch anything.
+pair of zombies is usually not a leak but a permanent quirk of some app. Measure whether the count GROWS before you touch anything, which is the check [mac_patrol.py](mac_patrol.py) makes.
 
 ## What the robot does on a schedule
 
@@ -77,28 +68,26 @@ count GROWS before you touch anything.
 | `WindowServer`, `kernel_task`, `launchd`, `loginwindow`, … | never touched, under any circumstances |
 | zombies | reported by PARENT name, which is the actual cure |
 
-A healthy run is silent. Set `MAC_PATROL_ALARM_CMD` and findings get piped to it as one line
+A healthy run is silent. Set `MAC_PATROL_ALARM_CMD` and [mac_patrol.py](mac_patrol.py) pipes findings to it as one line
 (`export MAC_PATROL_ALARM_CMD="/usr/bin/osascript -e 'display notification'"`, a curl to
 Slack, whatever you like).
 
 ### Safety rails you should know about
 
-- **The first run on a machine is a PREVIEW, always.** It prints what it would do, writes its
-  state file, and kills nothing. Read the list, allowlist your own daemons, then run again.
+- **The first run of [mac_patrol.py](mac_patrol.py) on a machine is a PREVIEW, always.** It prints what it would do, writes its
+  state file, and kills nothing. Read the list, allowlist your own daemons in a copy of [mac_patrol_allow.example.txt](mac_patrol_allow.example.txt), then run again.
   (`--force-first` overrides this if you know exactly what you are doing.)
 - **No kill without a measurement.** If the CPU-delta sampler returns nothing — it failed, or
-  your platform has none — hogs are *reported* as `unmeasured`, never killed. Falling back to
-  `ps %CPU` for a kill decision would break the one promise this tool makes.
-- **It never types a password.** Anything needing `sudo` is reported, not executed.
+  your platform has none — hogs are *reported* as `unmeasured`, never killed. Falling back to `ps %CPU` for a kill decision would break the one promise [mac_patrol.py](mac_patrol.py) makes.
+- **It never types a password.** Anything needing `sudo` is reported by [mac_patrol.py](mac_patrol.py), not executed.
 - **`mac_patrol_allow.txt`** (same directory) protects anything you list — by launchd label,
   systemd unit, or cmdline substring. You will need this: your own long-lived daemons have
   `PPID=1`, which is exactly what an orphan looks like. See `mac_patrol_allow.example.txt`.
-- **It never kills its own process chain** — it walks its ppid up to init first.
+- **It never kills its own process chain** — [mac_patrol.py](mac_patrol.py) walks its ppid up to init first, and [test_mac_patrol.py](test_mac_patrol.py) holds it to that.
 - **`--dry-run`** prints the full kill list and touches nothing.
 - **A system daemon younger than 2 hours is immune by design.** This matters right after you
   kill a Spotlight indexer: the replacements come back loud (`mds_stores` 47%, `installd` 34%)
-  for ten to twenty minutes. That is reindexing, it is correct behaviour, and a naive
-  watchdog would kill it in a loop forever.
+  for ten to twenty minutes. That is reindexing, it is correct behaviour, and a naive watchdog would kill it in a loop forever, so [mac_patrol.py](mac_patrol.py) leaves it alone.
 
 ## Field guide for doing it by hand
 
@@ -112,21 +101,16 @@ Claude Code can run the whole cleanup for you, or read it yourself as a checklis
 python3 test_mac_patrol.py     # 58 checks, fake process snapshots, kills nothing
 ```
 
-The tests drive the real file (including a real injected crash, to prove the crash-guard
-exits 4 and never masquerades as "found and handled").
+[test_mac_patrol.py](test_mac_patrol.py) drives the real file, including a real injected crash, to prove the crash-guard exits 4 and never masquerades as "found and handled".
 
 ## Platform
 
-macOS is the target. Linux works (cron + `/proc`). Windows parses and schedules, but has no
-CPU-delta measurement, so it falls back to the hard 24h session ceiling only — deliberately
-returning *nothing* rather than a fake zero.
+macOS is the target. Linux works (cron + `/proc`). On Windows [mac_patrol.py](mac_patrol.py) parses and schedules, but has no CPU-delta measurement, so it falls back to the hard 24h session ceiling only — deliberately returning *nothing* rather than a fake zero.
 
 ## Roadmap
 
 **Now — [v0.1.0](https://github.com/tonydzi/claude-mac-patrol/releases/tag/v0.1.0).**
-One file, standard library only: CPU-delta measurement instead of `ps %CPU`, class-weighted
-memory accounting, orphan-MCP and stale-session detection, `--dry-run`, and a 30-minute
-schedule installer (launchd on macOS, cron on Linux). 58 offline tests, now on CI.
+One file, [mac_patrol.py](mac_patrol.py), standard library only: CPU-delta measurement instead of `ps %CPU`, class-weighted memory accounting, orphan-MCP and stale-session detection, `--dry-run`, and a 30-minute schedule installer (launchd on macOS, cron on Linux). 58 offline tests, now on CI.
 
 **Next**, in the order we would take them:
 
@@ -164,9 +148,7 @@ MIT.
 
 ## 🧩 One piece of a working system
 
-This repository is one piece lifted out of a live operation: one non-technical founder, an AI
-cofounder, and a fleet of machines that reach consensus with each other and wake the human only
-for money or the irreversible. It was extracted after it survived production, not written as a
+This repository is one piece lifted out of a live operation mapped in [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md): one non-technical founder, an AI cofounder, and a fleet of machines that reach consensus with each other and wake the human only for money or the irreversible. It was extracted after it survived production, not written as a
 demo — and it runs on its own: nothing here phones home to the rest.
 
 **See how the whole thing fits together → [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md)**
@@ -177,7 +159,6 @@ Its closest neighbours in the **fleet** layer: [`claw-consensus`](https://github
 
 ## AI contributors
 
-This project is built by a human + AI team, and the git log says so: Claude writes most of
-the code, Codex and Grok review it, Gemini feeds the research. Each is credited on a commit
+This project is built by a human + AI team, and the git log says so under the rules in [AI-CONTRIBUTORS.md](https://github.com/tonydzi/.github/blob/main/AI-CONTRIBUTORS.md): Claude writes most of the code, Codex and Grok review it, Gemini feeds the research. Each is credited on a commit
 **only if its output changed that commit's content** — no decorative credits. Lab-wide
 policy, one source for every repo: [AI-CONTRIBUTORS.md](https://github.com/tonydzi/.github/blob/main/AI-CONTRIBUTORS.md).
