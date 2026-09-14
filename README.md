@@ -148,12 +148,14 @@ MIT.
 
 ## 🧩 One piece of a working system
 
-This repository is one piece lifted out of a live operation mapped in [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md): one non-technical founder, an AI cofounder, and a fleet of machines that reach consensus with each other and wake the human only for money or the irreversible. It was extracted after it survived production, not written as a
+This repository is one piece lifted out of a live operation: one non-technical founder, an AI
+cofounder, and a fleet of machines that reach consensus with each other and wake the human only
+for money or the irreversible. It was extracted after it survived production, not written as a
 demo — and it runs on its own: nothing here phones home to the rest.
 
 **See how the whole thing fits together → [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md)**
 
-Its closest neighbours in the **fleet** layer: [`claw-consensus`](https://github.com/tonydzi/claw-consensus) · [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy)
+Its closest neighbours in the **fleet** layer: [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy) · [`claw-consensus`](https://github.com/tonydzi/claw-consensus)
 
 <!--ecosystem-map:end-->
 
