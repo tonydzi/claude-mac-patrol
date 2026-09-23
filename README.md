@@ -155,7 +155,7 @@ demo — and it runs on its own: nothing here phones home to the rest.
 
 **See how the whole thing fits together → [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md)**
 
-Its closest neighbours in the **fleet** layer: [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy) · [`claw-consensus`](https://github.com/tonydzi/claw-consensus)
+Its closest neighbours in the **fleet** layer: [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy) · [`claude-consensus`](https://github.com/tonydzi/claude-consensus)
 
 <!--ecosystem-map:end-->
 
