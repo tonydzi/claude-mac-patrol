@@ -129,7 +129,7 @@ kills the wrong process is worse than none.
 ---
 
 Built by [Palo Alto AI Research Lab](https://github.com/tonydzi) — one
-founder, an AI cofounder, and a fleet of machines that kept slowing down until we wrote this.
+engineer running operations, an AI cofounder, and a fleet of machines that kept slowing down until we wrote this.
 Everything we ship is free.
 
 **If this saved your afternoon, star it — and if it misdiagnoses something on your machine,
