@@ -156,7 +156,7 @@ to the rest.
 
 **See how the whole thing fits together → [SYSTEM.md](https://github.com/tonydzi/tonydzi/blob/main/SYSTEM.md)**
 
-Its closest neighbours in the **fleet** layer: [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy) · [`claude-consensus`](https://github.com/tonydzi/claude-consensus)
+Its closest neighbours in the **fleet** layer: [`fleet-deploy`](https://github.com/tonydzi/fleet-deploy) · [`claude-consensus`](https://github.com/tonydzi/claw-consensus)
 
 <!--ecosystem-map:end-->
 
